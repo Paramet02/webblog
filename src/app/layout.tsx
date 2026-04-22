@@ -5,7 +5,7 @@ import Nav from '@/components/Nav';
 import TweaksPanel from '@/components/TweaksPanel';
 
 export const metadata: Metadata = {
-  title: 'paramet.notes',
+  title: 'paramet',
   description: 'Code, AI & the tech worth talking about',
 };
 
@@ -23,7 +23,7 @@ export default function RootLayout({
           <footer className="footer">
             <div className="container">
               <div className="footer-inner">
-                <span>© 2025 paramet.notes — Paramet Khing</span>
+                <span>© 2025 paramet — Paramet Khing</span>
                 <span>Made with ♥ and too much coffee</span>
               </div>
             </div>

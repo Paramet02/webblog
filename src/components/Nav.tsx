@@ -45,7 +45,7 @@ export default function Nav() {
         <div className="nav-inner">
           <Link href="/" className="brand">
             <div className="brand-mark" />
-            <span>paramet.notes</span>
+            <span>paramet</span>
           </Link>
 
           <div className={`nav-links${mobileOpen ? ' mobile-open' : ''}`}>
