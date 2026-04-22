@@ -611,7 +611,7 @@ export function AboutPage({ navigate }: { navigate: (r: Route) => void }) {
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
             {[
-              { emoji: '💻', text: 'Building paramet.notes — บล็อกนี้' },
+              { emoji: '💻', text: 'Building paramet — บล็อกนี้' },
               { emoji: '🤖', text: 'สนใจ AI tools และ how it changes the way we build' },
               { emoji: '📚', text: 'เรียนรู้และหา project ใหม่อยู่เสมอ' },
               { emoji: '🌏', text: 'Based in Thailand' },
@@ -794,7 +794,7 @@ export function AdminLogin({ onLogin }: { onLogin: () => void }) {
     <div className="login-wrap">
       <div className="login-card">
         <div className="brand-mark" style={{ width: 40, height: 40, borderRadius: 12 }} />
-        <h1>paramet.notes</h1>
+        <h1>paramet</h1>
         <div className="sub">Sign in to the admin panel</div>
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
           <div className="field">
@@ -1753,7 +1753,7 @@ export function AdminShell({
         <div className="admin-brand">
           <div className="brand-mark" />
           <div>
-            <div className="title">paramet.notes</div>
+            <div className="title">paramet</div>
             <div className="sub">Admin Panel</div>
           </div>
         </div>
