@@ -4,11 +4,11 @@ import { useState, useEffect, useRef, useCallback, createContext, useContext } f
 import Icon from './Icon';
 import Thumb from './Thumb';
 import {
-  Post, Work, Comment, MediaItem, Tag,
-  ARTICLE_SECTIONS,
+  Post, Work, Comment, Tag,
   type StoreData,
 } from '../lib/data';
 import * as db from '../lib/db';
+import type { Route } from '../lib/routes';
 
 // ─── Toast system ─────────────────────────────────────────────────────────────
 
@@ -74,49 +74,6 @@ function useToastState() {
   return { toasts, showToast, dismiss };
 }
 
-// ─── Tweaks state ─────────────────────────────────────────────────────────────
-
-interface Tweaks {
-  accentHue: number;
-  fontPair: string;
-  cardVariant: string;
-  heroVariant: string;
-  density: string;
-  dark: boolean;
-}
-
-const DEFAULT_TWEAKS: Tweaks = {
-  accentHue: 220,
-  fontPair: 'plex',
-  cardVariant: 'soft',
-  heroVariant: 'split',
-  density: 'comfy',
-  dark: false,
-};
-
-const HUE_SWATCHES = [
-  { hue: 220, label: 'Blue' },
-  { hue: 250, label: 'Indigo' },
-  { hue: 280, label: 'Violet' },
-  { hue: 170, label: 'Teal' },
-  { hue: 145, label: 'Green' },
-  { hue: 30, label: 'Orange' },
-  { hue: 10, label: 'Red' },
-  { hue: 320, label: 'Pink' },
-];
-
-// ─── Route type ───────────────────────────────────────────────────────────────
-
-type Route =
-  | { page: 'home' }
-  | { page: 'article'; id: string }
-  | { page: 'works' }
-  | { page: 'project'; id: string }
-  | { page: 'about' }
-  | { page: 'tags' }
-  | { page: 'search'; q?: string }
-  | { page: 'admin' };
-
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function formatDate(d: string) {
@@ -176,7 +133,7 @@ function WorkCard({ work, onClick, feature }: { work: Work; onClick: () => void;
 
 // ─── HomePage ─────────────────────────────────────────────────────────────────
 
-function HomePage({
+export function HomePage({
   posts,
   tags,
   navigate,
@@ -312,7 +269,7 @@ function HomePage({
 
 // ─── ArticlePage ──────────────────────────────────────────────────────────────
 
-function ArticlePage({
+export function ArticlePage({
   post,
   navigate,
   bookmarks,
@@ -490,7 +447,7 @@ function ArticlePage({
 
 // ─── WorksPage ────────────────────────────────────────────────────────────────
 
-function WorksPage({ works, navigate }: { works: Work[]; navigate: (r: Route) => void }) {
+export function WorksPage({ works, navigate }: { works: Work[]; navigate: (r: Route) => void }) {
   const [filter, setFilter] = useState('All');
   const allTags = ['All', ...Array.from(new Set(works.flatMap(w => w.tags)))];
   const filtered = filter === 'All' ? works : works.filter(w => w.tags.includes(filter));
@@ -526,7 +483,7 @@ function WorksPage({ works, navigate }: { works: Work[]; navigate: (r: Route) =>
 
 // ─── ProjectPage ──────────────────────────────────────────────────────────────
 
-function ProjectPage({ work, navigate, works }: { work: Work; navigate: (r: Route) => void; works: Work[] }) {
+export function ProjectPage({ work, navigate, works }: { work: Work; navigate: (r: Route) => void; works: Work[] }) {
   const related = works.filter(w => w.id !== work.id).slice(0, 3);
   return (
     <>
@@ -597,7 +554,7 @@ function ProjectPage({ work, navigate, works }: { work: Work; navigate: (r: Rout
 
 // ─── AboutPage ────────────────────────────────────────────────────────────────
 
-function AboutPage({ navigate }: { navigate: (r: Route) => void }) {
+export function AboutPage({ navigate }: { navigate: (r: Route) => void }) {
   return (
     <div className="container">
       <div className="about-hero">
@@ -693,7 +650,7 @@ function AboutPage({ navigate }: { navigate: (r: Route) => void }) {
 
 // ─── TagsPage ─────────────────────────────────────────────────────────────────
 
-function TagsPage({ tags, navigate }: { tags: Tag[]; navigate: (r: Route) => void }) {
+export function TagsPage({ tags, navigate }: { tags: Tag[]; navigate: (r: Route) => void }) {
   return (
     <div className="section">
       <div className="container">
@@ -721,7 +678,7 @@ function TagsPage({ tags, navigate }: { tags: Tag[]; navigate: (r: Route) => voi
 
 // ─── SearchPage ───────────────────────────────────────────────────────────────
 
-function SearchPage({
+export function SearchPage({
   posts,
   works,
   navigate,
@@ -810,127 +767,11 @@ function SearchPage({
   );
 }
 
-// ─── TweaksPanel ──────────────────────────────────────────────────────────────
-
-function TweaksPanel({ tweaks, setTweaks }: { tweaks: Tweaks; setTweaks: (t: Tweaks) => void }) {
-  const [open, setOpen] = useState(false);
-
-  const set = (patch: Partial<Tweaks>) => setTweaks({ ...tweaks, ...patch });
-
-  return (
-    <>
-      <button
-        className="icon-btn"
-        onClick={() => setOpen(!open)}
-        style={{ position: 'fixed', right: 20, bottom: 20, zIndex: 61, background: 'var(--panel)', border: '1px solid var(--line)', boxShadow: 'var(--shadow-lg)' }}
-        title="Tweaks"
-      >
-        <Icon name="sliders" size={16} />
-      </button>
-
-      {open && (
-        <div className="tweaks-panel" style={{ bottom: 68 }}>
-          <div className="tweaks-head">
-            <h3>Tweaks</h3>
-            <button className="icon-btn" onClick={() => setOpen(false)}><Icon name="x" size={14} /></button>
-          </div>
-          <div className="tweaks-body">
-            {/* Accent color */}
-            <div className="tweak-row">
-              <span className="label">Accent Color</span>
-              <div className="swatches">
-                {HUE_SWATCHES.map(s => (
-                  <button
-                    key={s.hue}
-                    className={`swatch${tweaks.accentHue === s.hue ? ' on' : ''}`}
-                    style={{ background: `oklch(0.58 0.16 ${s.hue})` }}
-                    title={s.label}
-                    onClick={() => set({ accentHue: s.hue })}
-                  />
-                ))}
-              </div>
-              <input
-                type="range"
-                min={0}
-                max={360}
-                value={tweaks.accentHue}
-                onChange={e => set({ accentHue: Number(e.target.value) })}
-                style={{ width: '100%', marginTop: 6 }}
-              />
-            </div>
-
-            {/* Font */}
-            <div className="tweak-row">
-              <span className="label">Font</span>
-              <div className="seg">
-                {[['plex', 'IBM Plex'], ['manrope', 'Manrope'], ['sarabun', 'Sarabun']].map(([v, l]) => (
-                  <button key={v} className={tweaks.fontPair === v ? 'on' : ''} onClick={() => set({ fontPair: v })}>{l}</button>
-                ))}
-              </div>
-            </div>
-
-            {/* Cards */}
-            <div className="tweak-row">
-              <span className="label">Cards</span>
-              <div className="seg">
-                {[['soft', 'Soft'], ['minimal', 'Minimal'], ['cover', 'Cover']].map(([v, l]) => (
-                  <button key={v} className={tweaks.cardVariant === v ? 'on' : ''} onClick={() => set({ cardVariant: v })}>{l}</button>
-                ))}
-              </div>
-            </div>
-
-            {/* Hero */}
-            <div className="tweak-row">
-              <span className="label">Hero</span>
-              <div className="seg">
-                {[['split', 'Split'], ['center', 'Center'], ['minimal', 'Minimal']].map(([v, l]) => (
-                  <button key={v} className={tweaks.heroVariant === v ? 'on' : ''} onClick={() => set({ heroVariant: v })}>{l}</button>
-                ))}
-              </div>
-            </div>
-
-            {/* Density */}
-            <div className="tweak-row">
-              <span className="label">Density</span>
-              <div className="seg">
-                {[['comfy', 'Comfy'], ['compact', 'Compact']].map(([v, l]) => (
-                  <button key={v} className={tweaks.density === v ? 'on' : ''} onClick={() => set({ density: v })}>{l}</button>
-                ))}
-              </div>
-            </div>
-
-            {/* Theme */}
-            <div className="tweak-row">
-              <span className="label">Theme</span>
-              <div className="seg">
-                <button className={!tweaks.dark ? 'on' : ''} onClick={() => set({ dark: false })}>
-                  <Icon name="sun" size={13} /> Light
-                </button>
-                <button className={tweaks.dark ? 'on' : ''} onClick={() => set({ dark: true })}>
-                  <Icon name="moon" size={13} /> Dark
-                </button>
-              </div>
-            </div>
-
-            <button
-              className="btn"
-              style={{ width: '100%', justifyContent: 'center', marginTop: 4 }}
-              onClick={() => setTweaks(DEFAULT_TWEAKS)}
-            >
-              Reset to defaults
-            </button>
-          </div>
-        </div>
-      )}
-    </>
-  );
-}
-
 // ─── Admin ────────────────────────────────────────────────────────────────────
 
 type AdminSection = 'dashboard' | 'posts' | 'editor' | 'works' | 'work-editor' | 'comments' | 'media' | 'settings';
 
-function AdminLogin({ onLogin }: { onLogin: () => void }) {
+export function AdminLogin({ onLogin }: { onLogin: () => void }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -1859,7 +1700,7 @@ function SettingsAdmin({ store, setStore }: { store: StoreData; setStore: (s: St
   );
 }
 
-function AdminShell({
+export function AdminShell({
   store,
   setStore,
   navigate,
@@ -1874,6 +1715,7 @@ function AdminShell({
   const [section, setSection] = useState<AdminSection>('dashboard');
   const [editId, setEditId] = useState<string | null>(null);
   const [editWorkId, setEditWorkId] = useState<string | null>(null);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const pendingComments = store.comments.filter(c => c.status === 'pending').length;
 
@@ -1901,8 +1743,13 @@ function AdminShell({
   return (
     <ToastContext.Provider value={{ showToast }}>
     <div className="admin-root">
+      {/* Mobile overlay */}
+      <div
+        className={`admin-overlay${sidebarOpen ? ' visible' : ''}`}
+        onClick={() => setSidebarOpen(false)}
+      />
       {/* Sidebar */}
-      <aside className="admin-side">
+      <aside className={`admin-side${sidebarOpen ? ' open' : ''}`}>
         <div className="admin-brand">
           <div className="brand-mark" />
           <div>
@@ -1916,7 +1763,7 @@ function AdminShell({
             <a
               key={item.section}
               className={section === item.section ? 'active' : ''}
-              onClick={() => setSection(item.section)}
+              onClick={() => { setSection(item.section); setSidebarOpen(false); }}
             >
               <Icon name={item.icon} size={15} />
               {item.label}
@@ -1942,6 +1789,9 @@ function AdminShell({
       {/* Main */}
       <main className="admin-main">
         <div className="admin-top">
+          <button className="icon-btn admin-menu-btn" onClick={() => setSidebarOpen(o => !o)} title="Menu">
+            <Icon name="menu" size={18} />
+          </button>
           <h1>{sectionTitle[section]}</h1>
           <div className="right">
             {section === 'posts' && (
@@ -1969,245 +1819,5 @@ function AdminShell({
     </div>
     <ToastContainer toasts={toasts} dismiss={dismiss} />
     </ToastContext.Provider>
-  );
-}
-
-// ─── Main ClientApp ───────────────────────────────────────────────────────────
-
-export default function ClientApp() {
-  const [route, setRoute] = useState<Route>({ page: 'home' });
-  const [tweaks, setTweaks] = useState<Tweaks>(DEFAULT_TWEAKS);
-  const [store, setStore] = useState<StoreData>({
-    posts: [],
-    works: [],
-    comments: [],
-    media: [],
-    activity: [],
-  });
-  const [loading, setLoading] = useState(true);
-  const [bookmarks, setBookmarks] = useState<Set<string>>(new Set());
-  const [likes, setLikes] = useState<Set<string>>(new Set());
-  const [adminLoggedIn, setAdminLoggedIn] = useState(false);
-  const [searchQ, setSearchQ] = useState('');
-
-  // Load from Supabase + check auth session
-  useEffect(() => {
-    async function init() {
-      const [data, loggedIn] = await Promise.all([
-        db.loadAllData(),
-        db.getSession(),
-      ]);
-      setStore(data);
-      setAdminLoggedIn(loggedIn);
-      setLoading(false);
-    }
-    init();
-  }, []);
-
-  // Apply tweaks to DOM
-  useEffect(() => {
-    const el = document.documentElement;
-    el.style.setProperty('--hue', String(tweaks.accentHue));
-    el.dataset.font = tweaks.fontPair;
-    el.dataset.card = tweaks.cardVariant;
-    el.dataset.hero = tweaks.heroVariant;
-    el.dataset.density = tweaks.density;
-    el.dataset.theme = tweaks.dark ? 'dark' : 'light';
-  }, [tweaks]);
-
-  // Admin mode class
-  useEffect(() => {
-    document.body.classList.toggle('admin-mode', route.page === 'admin');
-    return () => document.body.classList.remove('admin-mode');
-  }, [route.page]);
-
-  // Scroll to top on navigation
-  useEffect(() => {
-    window.scrollTo(0, 0);
-  }, [route]);
-
-  const navigate = useCallback((r: Route) => setRoute(r), []);
-
-  const toggleBookmark = (id: string) =>
-    setBookmarks(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
-
-  const toggleLike = (id: string) =>
-    setLikes(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
-
-  const addComment = (c: Comment) => {
-    setStore({ ...store, comments: [...store.comments, c] });
-    db.addComment(c);
-  };
-
-  if (loading) {
-    return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', color: 'var(--ink-3)', fontSize: 14 }}>
-        Loading...
-      </div>
-    );
-  }
-
-  const isAdmin = route.page === 'admin';
-
-  // ─ Admin
-  if (isAdmin) {
-    if (!adminLoggedIn) {
-      return <AdminLogin onLogin={() => setAdminLoggedIn(true)} />;
-    }
-    return (
-      <AdminShell
-        store={store}
-        setStore={setStore}
-        navigate={navigate}
-        onLogout={async () => { await db.signOut(); setAdminLoggedIn(false); navigate({ page: 'home' }); }}
-      />
-    );
-  }
-
-  // ─ Public routes
-  const currentPost = route.page === 'article' ? store.posts.find(p => p.id === route.id) : null;
-  const currentWork = route.page === 'project' ? store.works.find(w => w.id === route.id) : null;
-
-  const dynamicTags: Tag[] = Array.from(
-    store.posts
-      .filter(p => p.status === 'published')
-      .flatMap(p => p.tags)
-      .reduce((map, tag) => { map.set(tag, (map.get(tag) ?? 0) + 1); return map; }, new Map<string, number>())
-  ).map(([name, count]) => ({ name, count })).sort((a, b) => b.count - a.count);
-
-  const navLinks: { label: string; page: Route['page'] }[] = [
-    { label: 'Home', page: 'home' },
-    { label: 'Works', page: 'works' },
-    { label: 'Tags', page: 'tags' },
-    { label: 'About', page: 'about' },
-  ];
-
-  return (
-    <>
-      {/* Navigation */}
-      <nav className="nav">
-        <div className="container">
-          <div className="nav-inner">
-            <button className="brand" onClick={() => navigate({ page: 'home' })} style={{ background: 'none', border: 'none' }}>
-              <div className="brand-mark" />
-              <span>paramet.notes</span>
-            </button>
-            <div className="nav-links">
-              {navLinks.map(link => (
-                <button
-                  key={link.page}
-                  className={`nav-link${route.page === link.page ? ' active' : ''}`}
-                  onClick={() => navigate({ page: link.page } as Route)}
-                >
-                  {link.label}
-                </button>
-              ))}
-            </div>
-            <div className="nav-right">
-              <div className="search">
-                <Icon name="search" size={14} />
-                <input
-                  placeholder="Search..."
-                  value={searchQ}
-                  onChange={e => { setSearchQ(e.target.value); navigate({ page: 'search', q: e.target.value }); }}
-                  onFocus={() => route.page !== 'search' && navigate({ page: 'search' })}
-                />
-                <kbd>/</kbd>
-              </div>
-              <button
-                className="icon-btn"
-                onClick={() => setTweaks(t => ({ ...t, dark: !t.dark }))}
-                title={tweaks.dark ? 'Light mode' : 'Dark mode'}
-              >
-                <Icon name={tweaks.dark ? 'sun' : 'moon'} size={16} />
-              </button>
-              <button
-                className="icon-btn primary"
-                onClick={() => navigate({ page: 'admin' })}
-                title="Admin"
-              >
-                <Icon name="settings" size={15} />
-              </button>
-            </div>
-          </div>
-        </div>
-      </nav>
-
-      {/* Page content */}
-      <main style={{ flex: 1 }}>
-        {route.page === 'home' && (
-          <HomePage posts={store.posts} tags={dynamicTags} navigate={navigate} />
-        )}
-        {route.page === 'article' && currentPost && (
-          <ArticlePage
-            post={currentPost}
-            navigate={navigate}
-            bookmarks={bookmarks}
-            likes={likes}
-            toggleBookmark={toggleBookmark}
-            toggleLike={toggleLike}
-            comments={store.comments}
-            addComment={addComment}
-          />
-        )}
-        {route.page === 'article' && !currentPost && (
-          <div className="section container-narrow">
-            <p>Post not found. <button className="btn ghost" onClick={() => navigate({ page: 'home' })}>Go home</button></p>
-          </div>
-        )}
-        {route.page === 'works' && (
-          <WorksPage works={store.works} navigate={navigate} />
-        )}
-        {route.page === 'project' && currentWork && (
-          <ProjectPage work={currentWork} navigate={navigate} works={store.works} />
-        )}
-        {route.page === 'project' && !currentWork && (
-          <div className="section container-narrow">
-            <p>Project not found. <button className="btn ghost" onClick={() => navigate({ page: 'works' })}>Go to works</button></p>
-          </div>
-        )}
-        {route.page === 'about' && (
-          <AboutPage navigate={navigate} />
-        )}
-        {route.page === 'tags' && (
-          <TagsPage tags={dynamicTags} navigate={navigate} />
-        )}
-        {route.page === 'search' && (
-          <SearchPage
-            posts={store.posts}
-            works={store.works}
-            navigate={navigate}
-            initialQ={route.q ?? searchQ}
-          />
-        )}
-      </main>
-
-      {/* Footer */}
-      <footer className="footer">
-        <div className="container">
-          <div className="footer-inner">
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <div className="brand-mark" style={{ width: 24, height: 24, borderRadius: 8 }} />
-              <span>paramet.notes</span>
-            </div>
-            <span>© 2026 Paramet · Built with Next.js</span>
-            <div style={{ display: 'flex', gap: 16 }}>
-              {navLinks.map(link => (
-                <button
-                  key={link.page}
-                  style={{ background: 'none', border: 'none', color: 'var(--ink-3)', fontSize: 13, cursor: 'pointer' }}
-                  onClick={() => navigate({ page: link.page } as Route)}
-                >
-                  {link.label}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-      </footer>
-
-      {/* Tweaks panel */}
-      <TweaksPanel tweaks={tweaks} setTweaks={setTweaks} />
-    </>
   );
 }

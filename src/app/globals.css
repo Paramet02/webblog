@@ -430,3 +430,138 @@ body.admin-mode .nav, body.admin-mode .footer { display: none; }
 .toast-icon { flex-shrink: 0; opacity: 0.9; }
 .toast-close { margin-left: auto; padding: 0 0 0 8px; opacity: 0.6; flex-shrink: 0; color: inherit; }
 .toast-close:hover { opacity: 1; }
+
+/* ─── Responsive / Mobile ─────────────────────────────────────────────────── */
+
+/* Containers — tighter padding on phones */
+@media (max-width: 480px) {
+  .container, .container-narrow { padding: 0 16px; }
+}
+
+/* Nav — hamburger menu */
+.nav-menu-btn { display: none; }
+.nav-search-icon { display: none; }
+.nav-link-admin-mobile { display: none; }
+@media (max-width: 768px) {
+  .nav { position: sticky; } /* ensure absolute children are relative to this */
+  .nav-links {
+    display: none;
+    flex-direction: column;
+    position: absolute; top: 64px; left: 0; right: 0;
+    background: var(--panel); border-bottom: 1px solid var(--line);
+    padding: 10px 20px 18px; gap: 2px; z-index: 35;
+    box-shadow: 0 12px 32px -8px rgba(15,23,42,0.12);
+  }
+  .nav-links.mobile-open { display: flex; }
+  .nav-link { padding: 12px 16px; border-radius: var(--radius-sm); font-size: 15px; }
+  .nav-menu-btn { display: inline-flex; }
+  .search { display: none; }
+  .nav-search-icon { display: inline-flex; }
+  .nav-link-admin-mobile { display: flex; }
+  /* Hide the desktop admin icon-btn inside nav-right on mobile */
+  .nav-right .icon-btn.primary { display: none; }
+}
+
+/* Hero — collapse visual column on mobile */
+@media (max-width: 768px) {
+  .hero-inner { grid-template-columns: 1fr !important; }
+  .hero-visual { display: none !important; }
+  .hero { padding: 36px 0 24px; }
+  .hero p { font-size: 16px; }
+}
+
+/* Feed — already collapses at 900px */
+
+/* Post card — shrink thumb, then stack */
+@media (max-width: 560px) {
+  .post-card { grid-template-columns: 96px 1fr; gap: 14px; padding: 14px; }
+}
+@media (max-width: 400px) {
+  .post-card { grid-template-columns: 1fr; }
+  .post-thumb { aspect-ratio: 16/7; }
+}
+
+/* Works grid — remove feature span at 1-col */
+@media (max-width: 560px) {
+  .work-card.feature { grid-column: span 1; }
+  .work-card.feature .work-cover { aspect-ratio: 4/3; }
+}
+
+/* Project facts — 2 cols on mobile */
+@media (max-width: 560px) {
+  .project-facts { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* Article */
+@media (max-width: 480px) {
+  .article-hero { padding: 28px 0 16px; }
+  .article-hero h1 { font-size: clamp(26px, 8vw, 36px); }
+  .prose p { font-size: 16px; }
+}
+
+/* About — stats 2-col on phone */
+@media (max-width: 480px) {
+  .stats { grid-template-columns: 1fr 1fr; }
+}
+
+/* Section spacing */
+@media (max-width: 768px) {
+  .section { padding: 36px 0; }
+  .section-head h2 { font-size: 24px; }
+}
+
+/* Footer */
+@media (max-width: 480px) {
+  .footer { padding: 28px 0 40px; }
+  .footer-inner { flex-direction: column; align-items: flex-start; gap: 12px; }
+}
+
+/* Tweaks panel — full-width on very small phones */
+@media (max-width: 380px) {
+  .tweaks-panel { right: 8px; left: 8px; width: auto; bottom: 10px; }
+}
+
+/* Search results */
+@media (max-width: 480px) {
+  .result { grid-template-columns: 1fr; }
+  .result .kind { display: none; }
+}
+
+/* Editor — single pane on mobile */
+@media (max-width: 768px) {
+  .editor-layout { grid-template-columns: 1fr; }
+  .preview-pane { display: none; }
+}
+
+/* Settings — stack label/form on mobile */
+@media (max-width: 640px) {
+  .settings-section { grid-template-columns: 1fr; gap: 12px; }
+}
+
+/* Admin — sliding sidebar on mobile */
+.admin-overlay { display: none; }
+.admin-menu-btn { display: none !important; }
+@media (max-width: 900px) {
+  .admin-root { grid-template-columns: 1fr; }
+  .admin-side {
+    position: fixed; left: 0; top: 0; bottom: 0; z-index: 50;
+    width: 260px; height: 100dvh;
+    transform: translateX(-100%); transition: transform 0.25s cubic-bezier(0.4,0,0.2,1);
+  }
+  .admin-side.open { transform: translateX(0); box-shadow: var(--shadow-lg); }
+  .admin-overlay {
+    display: block; position: fixed; inset: 0; background: rgba(0,0,0,0.4);
+    z-index: 49; opacity: 0; pointer-events: none; transition: opacity 0.2s;
+  }
+  .admin-overlay.visible { opacity: 1; pointer-events: auto; }
+  .admin-menu-btn { display: inline-flex !important; }
+  .admin-body { padding: 20px 16px; }
+  .admin-top { padding: 12px 16px; }
+}
+@media (max-width: 600px) {
+  .stat-grid { grid-template-columns: 1fr 1fr; }
+  .dash-grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 400px) {
+  .stat-grid { grid-template-columns: 1fr; }
+}

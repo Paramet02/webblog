@@ -261,6 +261,14 @@ export default function Icon({ name, size = 18, stroke = 1.8 }: IconProps) {
           <line x1="21" y1="12" x2="9" y2="12" />
         </svg>
       );
+    case 'menu':
+      return (
+        <svg {...props}>
+          <line x1="3" y1="6" x2="21" y2="6" />
+          <line x1="3" y1="12" x2="21" y2="12" />
+          <line x1="3" y1="18" x2="21" y2="18" />
+        </svg>
+      );
     default:
       return (
         <svg {...props}>
