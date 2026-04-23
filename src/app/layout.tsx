@@ -3,6 +3,7 @@ import './globals.css';
 import { StoreProvider } from '@/providers/StoreProvider';
 import Nav from '@/components/Nav';
 import TweaksPanel from '@/components/TweaksPanel';
+import { SpeedInsights } from '@vercel/speed-insights/next';
 
 export const metadata: Metadata = {
   title: 'paramet',
@@ -30,6 +31,7 @@ export default function RootLayout({
           </footer>
           <TweaksPanel />
         </StoreProvider>
+        <SpeedInsights />
       </body>
     </html>
   );
