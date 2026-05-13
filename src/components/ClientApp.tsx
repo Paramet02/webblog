@@ -518,19 +518,6 @@ export function ProjectPage({ work, navigate, works }: { work: Work; navigate: (
         <div className="prose">
           <h2>About the project</h2>
           <p>{work.description}</p>
-          <h2>Challenge &amp; Approach</h2>
-          <p>The main challenge was building something scalable while keeping the developer experience smooth. We focused on clear API design and comprehensive documentation to ensure adoption across teams.</p>
-          <ul>
-            <li>Established shared design tokens as the single source of truth</li>
-            <li>Built a component API that was both flexible and opinionated</li>
-            <li>Created living documentation with interactive examples</li>
-            <li>Implemented automated visual regression testing</li>
-          </ul>
-          <h2>Outcome</h2>
-          <p>The project was delivered on time and exceeded stakeholder expectations. Post-launch metrics showed a 40% reduction in design inconsistencies and a 25% improvement in developer velocity for new feature work.</p>
-          <blockquote>
-            &quot;This is exactly the kind of thoughtful, scalable solution we needed.&quot; — Project Stakeholder
-          </blockquote>
         </div>
       </div>
 
