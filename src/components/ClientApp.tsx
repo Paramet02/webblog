@@ -308,6 +308,7 @@ export function HomePage({
   const allTags = ['All', ...Array.from(new Set(published.flatMap(p => p.tags)))];
   const filtered = activeTag === 'All' ? published : published.filter(p => p.tags.includes(activeTag));
   const featured = published.find(p => p.featured);
+  const latest = [...published].sort((a, b) => b.date.localeCompare(a.date))[0];
   const popular = [...published].sort((a, b) => b.views - a.views).slice(0, 5);
 
   return (
@@ -321,8 +322,18 @@ export function HomePage({
               <h1>Code, <em>AI</em> &amp; the tech worth talking about</h1>
               <p>สวัสดีครับ — ผม Paramet Software Developer ที่หลงใหลใน AI, Design Systems และเทคโนโลยีใหม่ที่กำลังเปลี่ยนโลก มาอ่านสิ่งที่ผมค้นพบและทดลองด้วยกันครับ</p>
               <div className="hero-cta">
-                <button className="btn primary" onClick={() => navigate({ page: 'article', id: featured?.id ?? '1' })}>
-                  <Icon name="arrow-right" size={15} /> Read latest post
+                {latest && (
+                  <button className="btn primary" onClick={() => navigate({ page: 'article', id: latest.id })}>
+                    <Icon name="arrow-right" size={15} /> Read latest post
+                  </button>
+                )}
+                <button
+                  className="btn"
+                  onClick={() => {
+                    document.querySelector('.feed')?.scrollIntoView({ behavior: 'smooth' });
+                  }}
+                >
+                  Browse all posts
                 </button>
                 <button className="btn" onClick={() => navigate({ page: 'works' })}>
                   View my work
@@ -523,7 +534,7 @@ export function ArticlePage({
             onClick={() => navigate({ page: 'home' })}
             style={{ marginBottom: 16, padding: '8px 0' }}
           >
-            <Icon name="arrow-left" size={15} /> Back
+            <Icon name="arrow-left" size={15} /> All posts
           </button>
           <div className="post-meta">
             <span className="post-tag">{post.tags[0]}</span>
