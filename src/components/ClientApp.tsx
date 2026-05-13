@@ -80,6 +80,167 @@ function formatDate(d: string) {
   return new Date(d).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
 }
 
+function renderInline(text: string, keyPrefix = ''): React.ReactNode {
+  const parts: React.ReactNode[] = [];
+  let rest = text;
+  let buf = '';
+  let n = 0;
+
+  const flush = () => {
+    if (buf) { parts.push(buf); buf = ''; }
+  };
+
+  const patterns: Array<{ re: RegExp; make: (m: RegExpMatchArray, key: string) => React.ReactNode }> = [
+    { re: /^!\[([^\]]*)\]\(([^)\s]+)(?:\s+"([^"]*)")?\)/, make: (m, k) => <img key={k} src={m[2]} alt={m[1]} title={m[3]} style={{ maxWidth: '100%', borderRadius: 8 }} /> },
+    { re: /^\[([^\]]+)\]\(([^)\s]+)(?:\s+"([^"]*)")?\)/, make: (m, k) => <a key={k} href={m[2]} title={m[3]} target={m[2].startsWith('http') ? '_blank' : undefined} rel={m[2].startsWith('http') ? 'noreferrer' : undefined}>{m[1]}</a> },
+    { re: /^\*\*([^*\n]+)\*\*/, make: (m, k) => <strong key={k}>{m[1]}</strong> },
+    { re: /^__([^_\n]+)__/, make: (m, k) => <strong key={k}>{m[1]}</strong> },
+    { re: /^\*([^*\n]+)\*/, make: (m, k) => <em key={k}>{m[1]}</em> },
+    { re: /^_([^_\n]+)_/, make: (m, k) => <em key={k}>{m[1]}</em> },
+    { re: /^`([^`\n]+)`/, make: (m, k) => <code key={k}>{m[1]}</code> },
+    { re: /^~~([^~\n]+)~~/, make: (m, k) => <del key={k}>{m[1]}</del> },
+  ];
+
+  while (rest.length > 0) {
+    let matched = false;
+    for (const p of patterns) {
+      const m = rest.match(p.re);
+      if (m) {
+        flush();
+        parts.push(p.make(m, `${keyPrefix}i${n++}`));
+        rest = rest.slice(m[0].length);
+        matched = true;
+        break;
+      }
+    }
+    if (!matched) {
+      buf += rest[0];
+      rest = rest.slice(1);
+    }
+  }
+  flush();
+  return parts;
+}
+
+function renderMarkdown(content: string): React.ReactNode[] {
+  if (!content) return [];
+  const lines = content.split('\n');
+  const out: React.ReactNode[] = [];
+  let i = 0;
+  let h2Index = 0;
+
+  while (i < lines.length) {
+    const line = lines[i];
+
+    // Fenced code block
+    if (line.startsWith('```')) {
+      const lang = line.slice(3).trim();
+      const buf: string[] = [];
+      i++;
+      while (i < lines.length && !lines[i].startsWith('```')) {
+        buf.push(lines[i]);
+        i++;
+      }
+      if (i < lines.length) i++; // skip closing ```
+      out.push(
+        <pre key={`pre-${i}`}>
+          <code className={lang ? `language-${lang}` : undefined}>{buf.join('\n')}</code>
+        </pre>
+      );
+      continue;
+    }
+
+    // Heading
+    const h = line.match(/^(#{1,6})\s+(.*)$/);
+    if (h) {
+      const level = h[1].length;
+      const text = h[2];
+      const key = `h-${i}`;
+      const inner = renderInline(text, key);
+      if (level === 1) out.push(<h1 key={key}>{inner}</h1>);
+      else if (level === 2) {
+        out.push(<h2 key={key} id={`h-${h2Index}`}>{inner}</h2>);
+        h2Index++;
+      }
+      else if (level === 3) out.push(<h3 key={key}>{inner}</h3>);
+      else if (level === 4) out.push(<h4 key={key}>{inner}</h4>);
+      else if (level === 5) out.push(<h5 key={key}>{inner}</h5>);
+      else out.push(<h6 key={key}>{inner}</h6>);
+      i++;
+      continue;
+    }
+
+    // Horizontal rule
+    if (/^(\*\*\*|---|___)\s*$/.test(line)) {
+      out.push(<hr key={`hr-${i}`} />);
+      i++;
+      continue;
+    }
+
+    // Blockquote
+    if (line.startsWith('>')) {
+      const buf: string[] = [];
+      while (i < lines.length && lines[i].startsWith('>')) {
+        buf.push(lines[i].replace(/^>\s?/, ''));
+        i++;
+      }
+      out.push(<blockquote key={`bq-${i}`}>{renderInline(buf.join(' '), `bq-${i}`)}</blockquote>);
+      continue;
+    }
+
+    // Unordered list
+    if (/^[-*]\s+/.test(line)) {
+      const items: string[] = [];
+      while (i < lines.length && /^[-*]\s+/.test(lines[i])) {
+        items.push(lines[i].replace(/^[-*]\s+/, ''));
+        i++;
+      }
+      out.push(
+        <ul key={`ul-${i}`}>
+          {items.map((it, k) => <li key={k}>{renderInline(it, `ul-${i}-${k}`)}</li>)}
+        </ul>
+      );
+      continue;
+    }
+
+    // Ordered list
+    if (/^\d+\.\s+/.test(line)) {
+      const items: string[] = [];
+      while (i < lines.length && /^\d+\.\s+/.test(lines[i])) {
+        items.push(lines[i].replace(/^\d+\.\s+/, ''));
+        i++;
+      }
+      out.push(
+        <ol key={`ol-${i}`}>
+          {items.map((it, k) => <li key={k}>{renderInline(it, `ol-${i}-${k}`)}</li>)}
+        </ol>
+      );
+      continue;
+    }
+
+    // Blank line
+    if (line.trim() === '') {
+      i++;
+      continue;
+    }
+
+    // Paragraph — collect consecutive non-block lines
+    const para: string[] = [];
+    while (
+      i < lines.length &&
+      lines[i].trim() !== '' &&
+      !/^(#{1,6}\s|```|>|[-*]\s|\d+\.\s)/.test(lines[i]) &&
+      !/^(\*\*\*|---|___)\s*$/.test(lines[i])
+    ) {
+      para.push(lines[i]);
+      i++;
+    }
+    out.push(<p key={`p-${i}`}>{renderInline(para.join(' '), `p-${i}`)}</p>);
+  }
+
+  return out;
+}
+
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
 function PostCard({ post, onClick }: { post: Post; onClick: () => void }) {
@@ -288,10 +449,32 @@ export function ArticlePage({
   comments: Comment[];
   addComment: (c: Comment) => void;
 }) {
+  const { showToast } = useToast();
   const [progress, setProgress] = useState(0);
   const [activeSection, setActiveSection] = useState('intro');
   const [commentText, setCommentText] = useState('');
   const postComments = comments.filter(c => c.postId === post.id && c.status === 'approved');
+
+  const handleShare = async () => {
+    const url = typeof window !== 'undefined' ? window.location.href : '';
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(url);
+      } else {
+        const ta = document.createElement('textarea');
+        ta.value = url;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+      }
+      showToast('Link copied to clipboard', 'success');
+    } catch {
+      showToast('Could not copy link', 'error');
+    }
+  };
 
   useEffect(() => {
     const onScroll = () => {
@@ -372,15 +555,9 @@ export function ArticlePage({
           {/* Prose — rendered from post.content markdown */}
           <div>
             <div className="prose">
-              {post.content ? post.content.split('\n').map((line, i) => {
-                if (line.startsWith('### ')) return <h3 key={i}>{line.slice(4)}</h3>;
-                if (line.startsWith('## ')) return <h2 key={i} id={`h-${post.content.split('\n').filter(l => l.startsWith('## ')).indexOf(line)}`}>{line.slice(3)}</h2>;
-                if (line.startsWith('# ')) return <h1 key={i}>{line.slice(2)}</h1>;
-                if (line.startsWith('> ')) return <blockquote key={i}>{line.slice(2)}</blockquote>;
-                if (line.startsWith('```')) return null;
-                if (line.trim() === '') return <br key={i} />;
-                return <p key={i}>{line}</p>;
-              }) : <p style={{ color: 'var(--ink-3)' }}>No content yet.</p>}
+              {post.content
+                ? renderMarkdown(post.content)
+                : <p style={{ color: 'var(--ink-3)' }}>No content yet.</p>}
             </div>
 
             {/* Comments */}
@@ -431,7 +608,7 @@ export function ArticlePage({
               >
                 <Icon name="bookmark" size={18} />
               </button>
-              <button className="action-btn" title="Share">
+              <button className="action-btn" title="Copy link" onClick={handleShare}>
                 <Icon name="share" size={18} />
               </button>
               <button className="action-btn" title="Comment" onClick={() => document.querySelector('.comments')?.scrollIntoView({ behavior: 'smooth' })}>
@@ -1220,14 +1397,7 @@ function PostEditor({
         </div>
         {title && <h1 style={{ fontFamily: 'var(--font-serif)', fontSize: 'clamp(28px,3vw,40px)', letterSpacing: '-0.02em', fontWeight: 500, margin: '0 0 16px' }}>{title}</h1>}
         <div className="prose">
-          {previewContent.split('\n\n').map((para, i) => {
-            if (para.startsWith('## ')) return <h2 key={i}>{para.slice(3)}</h2>;
-            if (para.startsWith('### ')) return <h3 key={i}>{para.slice(4)}</h3>;
-            if (para.startsWith('> ')) return <blockquote key={i}>{para.slice(2)}</blockquote>;
-            const imgMatch = para.match(/^!\[([^\]]*)\]\(([^)]+)\)$/);
-            if (imgMatch) return <img key={i} src={imgMatch[2]} alt={imgMatch[1]} style={{ maxWidth: '100%', borderRadius: 8 }} />;
-            return <p key={i}>{para}</p>;
-          })}
+          {renderMarkdown(previewContent)}
         </div>
       </div>
     </div>

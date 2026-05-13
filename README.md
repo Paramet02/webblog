@@ -180,7 +180,6 @@ The floating **TweaksPanel** (bottom-right) writes these values into `document.d
 
 ## Known gaps / TODO
 
-- `TAGS` and `ARTICLE_SECTIONS` constants in `src/lib/data.ts` are leftover mock data and unused — safe to delete.
 - TweaksPanel selections aren't persisted across reloads (could write to localStorage or to a `user_settings` Supabase row).
 - `bookmarks` / `likes` are in-memory only.
 - `next/image` is not used yet — thumbnails are CSS-only `Thumb` variants; media-library images are rendered with raw `<img>`.
