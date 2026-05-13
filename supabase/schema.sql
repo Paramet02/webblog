@@ -155,6 +155,21 @@ insert into activity_log (id, type, text, "when") values
   ('a5','publish','Published "CSS oklch() และอนาคตของสี"','3d ago')
 on conflict (id) do nothing;
 
+-- ─── Functions ─────────────────────────────────────────────
+-- Public view-counter. SECURITY DEFINER bypasses RLS so anon can bump views,
+-- but the WHERE clause keeps it limited to published posts only.
+
+create or replace function increment_post_views(post_id text)
+returns void
+language sql
+security definer
+set search_path = public
+as $$
+  update posts set views = views + 1 where id = post_id and status = 'published';
+$$;
+
+grant execute on function increment_post_views(text) to anon, authenticated;
+
 -- ─── Done ─────────────────────────────────────────────────
 -- Next step: go to Authentication → Users → Invite user
 -- and create your admin account with email + password.

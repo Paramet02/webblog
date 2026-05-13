@@ -151,6 +151,10 @@ export async function deletePost(id: string): Promise<{ error: string | null }> 
   return { error: error ? error.message : null };
 }
 
+export async function incrementPostViews(id: string): Promise<void> {
+  await supabase.rpc('increment_post_views', { post_id: id });
+}
+
 // ─── Works ────────────────────────────────────────────────────────────────────
 
 export async function upsertWork(work: Work): Promise<void> {

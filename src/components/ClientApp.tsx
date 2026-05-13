@@ -486,6 +486,15 @@ export function ArticlePage({
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (post.status !== 'published') return;
+    const key = `viewed:${post.id}`;
+    if (sessionStorage.getItem(key)) return;
+    sessionStorage.setItem(key, '1');
+    db.incrementPostViews(post.id);
+  }, [post.id, post.status]);
+
   const handleComment = () => {
     if (!commentText.trim()) return;
     addComment({
@@ -1261,7 +1270,7 @@ function PostEditor({
   const [excerpt, setExcerpt] = useState(existing?.excerpt ?? '');
   const [tagInput, setTagInput] = useState('');
   const [tags, setTags] = useState<string[]>(existing?.tags ?? []);
-  const [status, setStatus] = useState<Post['status']>(existing?.status ?? 'draft');
+  const [status, setStatus] = useState<Post['status']>(existing?.status ?? 'published');
   const [saveState, setSaveState] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const postIdRef = useRef(existing?.id ?? `post_${Date.now()}`);
   const storeRef = useRef(store);
